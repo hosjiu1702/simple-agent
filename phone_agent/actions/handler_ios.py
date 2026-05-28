@@ -248,8 +248,13 @@ class IOSActionHandler:
     def _handle_takeover(self, action: dict, width: int, height: int) -> ActionResult:
         """Handle takeover request (login, captcha, etc.)."""
         message = action.get("message", "User intervention required")
-        self.takeover_callback(message)
-        return ActionResult(True, False)
+        status, msg = self.takeover_callback(message)
+        if status is True:
+            print(f"[DEBUG][_handle_takeover] {status}")
+            return ActionResult(True, False)
+        print(f"[DEBUG][_handle_takeover] {status}")
+        print(f"[DEBUG][_handle_takeover][msg] {msg}")
+        return ActionResult(False, True, message=msg)
 
     def _handle_note(self, action: dict, width: int, height: int) -> ActionResult:
         """Handle note action (placeholder for content recording)."""

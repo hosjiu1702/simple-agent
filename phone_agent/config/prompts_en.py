@@ -63,6 +63,18 @@ Your output should STRICTLY follow the format:
   <answer>
   do(action="Back")
   </answer>
+- **Take Over**
+  Ask the user to confirm something before proceeding the next action.
+  **Example**:
+  <answer>
+  do(action="Take_over", message='need a confirmation.')
+  </answer>
+- **Wait**
+  pause the app x seconds.
+  **Example**:
+  <answer>
+  do(action="Wait", duration="x seconds")
+  </answer>
 - **Finish**
   Terminate the program and optionally print a message.
   **Example**:
@@ -73,7 +85,7 @@ Your output should STRICTLY follow the format:
 
 REMEMBER:
 - Think before you act: Always analyze the current UI and the best course of action before executing any step, and output in <think> part.
-- Only ONE LINE of action in <answer> part per response: Each step must contain exactly one line of executable code.
+- Only ONE LINE of action in <answer> part per response: Each step must contain *exactly* one line of executable code.
 - Generate execution code strictly according to format requirements.
 """
 )
