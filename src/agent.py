@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 import os
 import textwrap
-from typing import List, Optional, Annotated
+from typing import List, Optional, Annotated, Tuple
 from datetime import date
 from src.prompts.generic import GENERAL_INSTRUCTIONS
 from src.schema import UserQuery
@@ -34,6 +34,7 @@ from src.utils import generate_instructions
 from phone_agent import IOSPhoneAgent
 from phone_agent.model import ModelConfig
 from phone_agent.agent_ios import IOSAgentConfig
+from phone_agent.config import get_messages
 
 
 # Local debug session.
@@ -234,7 +235,8 @@ def generate_image(prompt: str):
 
 
 @function_tool
-def book_a_ride(
+async def book_a_ride(
+    wrapper: RunContextWrapper[UserQuery],
     pickup: Annotated[str, "the pickup location"],
     destination: Annotated[str, "the dropoff location"]
 ):
@@ -245,10 +247,37 @@ def book_a_ride(
     print(f"[DEBUG][book_a_ride] pickup: {pickup}")
     print(f"[DEBUG][book_a_ride] destination: {destination}")
 
+    messages = get_messages(lang="en")
+
+    def _confirmation_callback(msg: str):
+        """
+        Ask user for the confirmation.
+        """
+        ctx = wrapper.context
+        my_msg = "Do you want to confirm the booking?"
+        print(f"[DEBUG][book_a_ride][_confirmation_callback] my_msg = {my_msg}")
+        print(f"[DEBUG][book_a_ride][_confirmation_callback] msg = {msg}")
+        print(f"[DEBUG][book_a_ride][_confirmation_callback] [{messages["confirmation_required"]}] {msg}")
+
+        # For testing only
+        # In practical setting we directly call to Zalo chat channel for getting user confirmation.
+        response = input(f"Need to confirm: (y/n?)")
+        decision = response.lower() == "y"
+        print(f"[DEBUG][book_a_ride][_confirmation_callback] response = {response}")
+        if decision is False:
+            print(f"[DEBUG][book_a_ride][_confirmation_callback][decision] False")
+            message="It seems that the booking process went wrong. Please booking again or call the number 0764086659 (Mr. Huy) for the help."
+            return (False, message)
+        print(f"[DEBUG][book_a_ride][_confirmation_callback][decision] True")
+        return (True, "")
+        # await ctx.zalo_bot.send_message(ctx.chat_id, my_msg)
+
     model_config = ModelConfig(
         base_url=os.getenv("PHONE_AGENT_BASE_URL"),
         api_key=os.getenv("PHONE_API_KEY"),
-        model_name=os.getenv("PHONE_MODEL_NAME")
+        model_name=os.getenv("PHONE_MODEL_NAME"),
+        temperature=0.1,
+        lang="en"
     )
     agent_config = IOSAgentConfig(
         wda_url=os.getenv("PHONE_AGENT_WDA_URL"),
@@ -257,15 +286,21 @@ def book_a_ride(
     )
     phone_agent = IOSPhoneAgent(
         model_config=model_config,
-        agent_config=agent_config
+        agent_config=agent_config,
+        takeover_callback=_confirmation_callback
     )
 
     BOOKING_QUERY = f"""
-    open Grab app, and book a ride (vehicle type is only bike) in which 
-    the current location is {pickup} and the target is {destination}.
+    Open Green SM app. Choose Bike option. Firstly, set the *current location* (a.k.a pickup) to {pickup} and then *where to?* to {destination} and ask user (*Take_over*) to confirm the ride before tapping the 'Book' button, then finish.
     """
-    print(f"[DEBUG][book_a_ride] running ...")
-    result = phone_agent.run(BOOKING_QUERY)
+    try:
+        print(f"[DEBUG][book_a_ride] running ...")
+        result = phone_agent.run(BOOKING_QUERY)
+    except Exception as e:
+        print(f"[DEBUG][book_a_ride] Error: {e}")
+        print("TESTING\nTESTING\nTESTING")
+    finally:
+        print(f"[DEBUG][book_a_ride][result] {result}")
 
     return result
 
@@ -278,9 +313,12 @@ class LLMClient(str):
 
 # Create a dedicated phone agent for phone using and
 # take over the control of the conversation flow.
+RIDE_BOOKING_PROMPT = f"""
+You are a helpful assistant which help to book a ride. Always call book_a_ride tool.
+"""
 ride_booking_agent = Agent(
     name="Ride Booking Agent",
-    instructions="You are a helpful assistant which help to book a ride for user. Always call book_a_ride tool.",
+    instructions=RIDE_BOOKING_PROMPT,
     handoff_description="Whenever user asks for ride booking then this agent will be invoked and take over the conversation control.",
     tools=[book_a_ride],
     model=OpenAIChatCompletionsModel(model=MODEL_NAME, openai_client=client),
@@ -296,10 +334,9 @@ async def ride_booking_handoff(wrapper: RunContextWrapper[UserQuery], input_data
     ctx = wrapper.context
     pickup = input_data.pickup
     dropoff = input_data.dropoff
-    msg = f"From (điểm đi): {pickup}\n"
-    msg += f"To (điểm đến): {dropoff}"
-    await ctx.zalo_bot.send_message(ctx.chat_id, msg)
-    await asyncio.sleep(1.5)
+    # msg = f"From (điểm đi): {pickup}\n"
+    # msg += f"To (điểm đến): {dropoff}"
+    # await ctx.zalo_bot.send_message(ctx.chat_id, msg)
     await ctx.zalo_bot.send_message(ctx.chat_id, "⏳")
 
 ride_booking_handoff = handoff(
@@ -315,7 +352,7 @@ class NewsAgent:
         client: AsyncOpenAI | LitellmModel | str = client,
         model_name: str = MODEL_NAME,
         instructions: str = GENERAL_INSTRUCTIONS,
-        tools: List[FunctionTool] = [search_web, generate_image, analyze_image],
+        tools: List[FunctionTool] = [search_web, generate_image, analyze_image, book_a_ride],
         debug: bool = False,
         handoffs: Optional[List] = [ride_booking_handoff]
     ):
