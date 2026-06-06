@@ -17,6 +17,8 @@ from zalo_bot.ext import (
 from zalo_bot.constants import ChatAction
 from agents import SQLiteSession, SessionSettings
 from src.agent import NewsAgent
+from src.settings import init_global_settings
+from src import settings
 
 
 load_dotenv()
@@ -24,6 +26,9 @@ bot = Bot(token=os.getenv("ZALO_BOT_TOKEN"))
 bot.set_webhook(url=os.getenv("WEBHOOK_URL"), secret_token=os.getenv("SECRET_TOKEN"))
 
 app = Flask(__name__)
+init_global_settings()
+
+# Init main agent
 news_agent = NewsAgent(debug=True)
 
 # CONVERSATION HISTORY DATABASE
@@ -65,6 +70,34 @@ async def reply_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Agent responded: {response}")
 
 
+async def confirm_ride_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(f"[DEBUG][confirm_ride_booking] Called.")
+    print(f"[DEBUG][confirm_ride_booking][settings.pending] = {settings.pending}")
+    chat_id = update.message.chat.id
+    message = update.message.text
+
+    if settings.pending.get(chat_id, None) is None:
+        return
+
+    print(f"[DEBUG][confirm_ride_booking] chat_id = {chat_id}")
+    settings.decisions[chat_id] = True
+    settings.pending[chat_id].set()
+
+
+async def cancel_ride_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(f"[DEBUG][cancel_ride_booking] Called.")
+    print(f"[DEBUG][cancel_ride_booking][settings.pending] = {settings.pending}")
+    chat_id = update.message.chat.id
+    message = update.message.text
+
+    if settings.pending.get(chat_id, None) is None:
+        return
+
+    print(f"[DEBUG][cancel_ride_booking] chat_id = {chat_id}")
+    settings.decisions[chat_id] = False
+    settings.pending[chat_id].set()
+
+
 # async def reply_for_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #     caption = update.message.api_kwargs.get("caption", "")
 #     photo_url = update.message.api_kwargs.get("photo_url", "")
@@ -93,7 +126,9 @@ def webhook():
 
 
 dispatcher = Dispatcher(bot, None, workers=0)
-dispatcher.add_handler(MessageHandler(filters.TEXT, reply_user))
+dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_user))
+dispatcher.add_handler(CommandHandler("ok", confirm_ride_booking))
+dispatcher.add_handler(CommandHandler("no", cancel_ride_booking))
 # dispatcher.add_handler(MessageHandler(filters.PHOTO, reply_for_photo))
 
 if __name__ == "__main__":

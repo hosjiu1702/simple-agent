@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass
 import asyncio
 import logfire
@@ -35,6 +36,7 @@ from phone_agent import IOSPhoneAgent
 from phone_agent.model import ModelConfig
 from phone_agent.agent_ios import IOSAgentConfig
 from phone_agent.config import get_messages
+from src import settings
 
 
 # Local debug session.
@@ -249,28 +251,39 @@ async def book_a_ride(
 
     messages = get_messages(lang="en")
 
+    current_loop = asyncio.get_running_loop()
+
     def _confirmation_callback(msg: str):
         """
         Ask user for the confirmation.
         """
         ctx = wrapper.context
-        my_msg = "Do you want to confirm the booking?"
-        print(f"[DEBUG][book_a_ride][_confirmation_callback] my_msg = {my_msg}")
+        # my_msg = "Do you want to confirm the booking?"
+        # print(f"[DEBUG][book_a_ride][_confirmation_callback] my_msg = {my_msg}")
         print(f"[DEBUG][book_a_ride][_confirmation_callback] msg = {msg}")
         print(f"[DEBUG][book_a_ride][_confirmation_callback] [{messages["confirmation_required"]}] {msg}")
 
         # For testing only
         # In practical setting we directly call to Zalo chat channel for getting user confirmation.
-        response = input(f"Need to confirm: (y/n?)")
-        decision = response.lower() == "y"
-        print(f"[DEBUG][book_a_ride][_confirmation_callback] response = {response}")
+        # my_msg += "\n Please type OK for confirming."
+        # current_loop.create_task(ctx.zalo_bot.send_message(ctx.chat_id, my_msg))
+        asyncio.run_coroutine_threadsafe(
+            ctx.zalo_bot.send_message(ctx.chat_id, msg),
+            current_loop
+        )
+        event = threading.Event()
+        settings.pending[ctx.chat_id] = event # hold for thread status
+        event.wait(timeout=180) # halt until the user actually confirms their acceptance
+        decision = settings.decisions.get(ctx.chat_id, False) # get the user decision from zalo
+        settings.pending.pop(ctx.chat_id)
+
+        print(f"[DEBUG][_confirmation_callback][Event] OK")
         if decision is False:
             print(f"[DEBUG][book_a_ride][_confirmation_callback][decision] False")
             message="It seems that the booking process went wrong. Please booking again or call the number 0764086659 (Mr. Huy) for the help."
             return (False, message)
         print(f"[DEBUG][book_a_ride][_confirmation_callback][decision] True")
         return (True, "")
-        # await ctx.zalo_bot.send_message(ctx.chat_id, my_msg)
 
     model_config = ModelConfig(
         base_url=os.getenv("PHONE_AGENT_BASE_URL"),
@@ -291,11 +304,11 @@ async def book_a_ride(
     )
 
     BOOKING_QUERY = f"""
-    Open Green SM app. Choose Bike option. Firstly, set the *current location* (a.k.a pickup) to {pickup} and then *where to?* to {destination} and ask user (*Take_over*) to confirm the ride before tapping the 'Book' button, then finish.
+    Open Green SM app. Choose *Bike* option. Change the *Use my current location* (a.k.a pickup) to {pickup} and then *Where to?* to {destination} and ask user (*Take_over*) to confirm the ride before tapping the Book button, then finish.
     """
     try:
         print(f"[DEBUG][book_a_ride] running ...")
-        result = phone_agent.run(BOOKING_QUERY)
+        result = await asyncio.to_thread(phone_agent.run, BOOKING_QUERY)
     except Exception as e:
         print(f"[DEBUG][book_a_ride] Error: {e}")
         print("TESTING\nTESTING\nTESTING")
