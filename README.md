@@ -1,8 +1,24 @@
 # simple-agent
 
-Like its name, this's an simple QA Zalo Agent serving for my parents.
+Like its name, this's an simple Zalo Agent, which is capable of using tools (web-search, Grab ride booking) serving for my parents.
 
 *[WIP]*
+
+### Quick Demo
+(_This demo is a proof of concept for ride booking feature_)
+
+<!--> This is the markdown comment <-->
+<p align="center">
+    <a href="https://www.youtube.com/watch?v=eddmAbnFlCs">
+        <img src="https://img.youtube.com/vi/eddmAbnFlCs/maxresdefault.jpg" width="50%%">
+    </a>
+</p>
+
+### System Overview
+_Below is a simplified high-level system diagram_
+<p align="center">
+    <img src="./asset/simple-agent-overview.png" width="60%">
+</p>
 
 ### Prerequistes
 
@@ -24,15 +40,17 @@ Like its name, this's an simple QA Zalo Agent serving for my parents.
 
 ### Tools
 
-- Buil-in web search tool.
+- Built-in web search tool.
+- Ride booking with a dedicated GUI agent (sub-agent), which is invoked by the main primary agent through the OpenAI's handoff mechanism.
 
 ### Agent Patterns
 
-- Single Agent currently.
+- One main agent along with only one sub-agent for ride booking feature
 
-### AI Tools
+### IDE & AI coding agent
 
-- **Cursor** (chat w/ the codebase directly)
+- Cursor _(IDE)_
+- Kilocode _(AI coding assistant)_
 
 ### Learning List
 
