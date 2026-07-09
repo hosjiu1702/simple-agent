@@ -17,7 +17,7 @@ Like its name, this's an simple Zalo Agent, which is capable of using tools (web
 ### System Overview
 _Below is a simplified high-level system diagram_
 <p align="center">
-    <img src="./asset/simple-agent-overview.png" width="60%">
+    <img src="./asset/simple-agent-overview.png" width="75%">
 </p>
 
 ### Prerequistes
