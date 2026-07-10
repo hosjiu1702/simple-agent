@@ -1,58 +1,61 @@
-# simple-agent
+# Simple Agent
 
-Like its name, this's an simple Zalo Agent, which is capable of using tools (web-search, Grab ride booking) serving for my parents.
+A simple Zalo bot agent capable of using tools such as web search and Grab ride booking, built to help my parents.
 
-*[WIP]*
+*[Work in Progress]*
 
-### Quick Demo
-This demo is a proof of concept for  <ins>ride booking feature</ins>
+## Quick Demo
 
-_(click the preview image to watch full video)_
+This demo showcases a proof-of-concept implementation of the <ins>ride booking feature</ins>.
+
+_(Click the preview image below to watch the full video)_
+
 <p align="center">
     <a href="https://www.youtube.com/watch?v=eddmAbnFlCs">
-        <img src="https://img.youtube.com/vi/eddmAbnFlCs/maxresdefault.jpg" width="50%%">
+        <img src="https://img.youtube.com/vi/eddmAbnFlCs/maxresdefault.jpg" width="50%">
     </a>
 </p>
 
-### System Overview
-_Below is a simplified high-level system diagram_
+## System Overview
+
+Below is a simplified high-level system diagram.
+
 <p align="center">
     <img src="./asset/simple-agent-overview.png" width="75%">
 </p>
 
-### Prerequistes
+## Prerequisites
 
-- LLM API KEY (GLM, GEMINI or CLAUDE). It can be extended on your demands.
+- An LLM API key (GLM, Gemini, or Claude). Support for other providers can be added as needed.
 
-### Installation & Usage
+## Installation & Usage
 
-- I am working on it (*maybe*). But I think you should give a quick look to [python-zalo-bot](https://pypi.org/project/python-zalo-bot/) SDK first :)
+- Installation and usage instructions are still in progress (*maybe someday*). In the meantime, check out the [python-zalo-bot](https://pypi.org/project/python-zalo-bot/) SDK.
 
-### Technical Overview
+## Technical Overview
 
-- **OpenAI Python SDK**.
-- **LiteLLM** for LLM model providers routing & cost tracking.
-- **PostgreSQL** database to save LiteLLM configurations.
-- **Zalo API** for interating with Zalo Bot.
-- *Webhook* vs *Long-Polling* for communication protocol.
-- Short-term file-based memory with SQLite database.
-- Currently, I am using **GLM**, **Gemini** and **Claude** as LLM models under the hood.
+- **OpenAI Python SDK** as the core agent framework.
+- **LiteLLM** for LLM provider routing and cost tracking.
+- **PostgreSQL** to store LiteLLM configurations.
+- **Zalo API** for interacting with Zalo Bot.
+- **Webhook** and **long-polling** supported as communication protocols.
+- Short-term, file-based memory backed by SQLite.
+- Currently powered by **GLM**, **Gemini**, and **Claude** as the underlying LLMs.
 
-### Tools
+## Tools
 
 - Built-in web search tool.
-- Ride booking with a dedicated GUI agent (sub-agent), which is invoked by the main primary agent through the OpenAI's handoff mechanism.
+- Ride booking via a dedicated GUI sub-agent, invoked by the main agent through OpenAI's handoff mechanism.
 
-### Agent Patterns
+## Agent Architecture
 
-- One main agent along with only one sub-agent for ride booking feature
+- One main agent with a single sub-agent dedicated to the ride booking feature.
 
-### IDE & AI coding agent
+## IDE & AI Coding Tools
 
-- Cursor _(IDE)_
-- Kilocode _(AI coding assistant)_
+- **Cursor** (IDE)
+- **Kilocode** (AI coding assistant)
 
-### Learning List
+## Learning List
 
-- Async in Python.
-
+- Async programming in Python.
