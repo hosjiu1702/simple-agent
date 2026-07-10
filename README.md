@@ -51,6 +51,10 @@ Below is a simplified high-level system diagram.
 
 - One main agent with a single sub-agent dedicated to the ride booking feature.
 
+<p align="center">
+    <img src="./asset/agent-arch.png" width="75%">
+</p>
+
 ## IDE & AI Coding Tools
 
 - **Cursor** (IDE)
