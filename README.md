@@ -5,9 +5,9 @@ Like its name, this's an simple Zalo Agent, which is capable of using tools (web
 *[WIP]*
 
 ### Quick Demo
-(_This demo is a proof of concept for ride booking feature_)
+This demo is a proof of concept for  <ins>ride booking feature</ins>
 
-<!--> This is the markdown comment <-->
+_(click the preview image to watch full video)_
 <p align="center">
     <a href="https://www.youtube.com/watch?v=eddmAbnFlCs">
         <img src="https://img.youtube.com/vi/eddmAbnFlCs/maxresdefault.jpg" width="50%%">
